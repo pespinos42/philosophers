@@ -69,25 +69,33 @@ void	ft_print_number(int n)
 	}
 }
 
-void	ft_print_data(int *numbers, int n)
+void	ft_print_data(int *numbers, t_all *philosophers)
 {
 	int	p = 0;
 
-	while (p < n)
+	while (p < numbers[0])
 	{
-		ft_print_number(numbers[p]);
+		printf("----------PHILOSOPHER %i----------\n", philosophers[p].index_philosopher);
+		printf("TIME TO DIE -> %li\n", philosophers[p].time_to_die);
+		printf("TIME TO EAT -> %li\n", philosophers[p].time_to_eat);
+		printf("TIME TO SLEEP -> %li\n", philosophers[p].time_to_sleep);
+		printf("NUMBER OF TIMES -> %i\n", philosophers[p].number_of_times);
+		printf("START EATING -> %li\n", philosophers[p].start_eating);
+		printf("START SLEEPING -> %li\n", philosophers[p].start_sleeping);
+		printf("START THINKING -> %li\n", philosophers[p].start_thinking);
+		//ft_print_number(numbers[p]);
 		write(1, "\n", 1);
 		p++;
 	}
 }
 
 //Rellenamos el array de filosofos con los datos introducidos
-void	ft_fill_data(t_all *philosophers, int n, int *data)
+void	ft_fill_data(t_all *philosophers, int *data)
 {
 	int	p;
 
 	p = 0;
-	while (p < n)
+	while (p < data[0])
 	{
 		philosophers[p].index_philosopher = p;
 		philosophers[p].time_to_die = data[1];
@@ -128,8 +136,10 @@ int main(int argc, char **argv)
 
 		//CREAMOS EL ARRAY DE FILOSOFOS SEGUN EL Nº INTRODUCIDO POR PARAMETRO
 		philosophers = ft_create_philosophers(args[0]);
+		ft_fill_data(philosophers, args);
 
-		ft_print_data(args, argc - 1);
+
+		ft_print_data(args, philosophers);
 	}		
 	return (0);
 }

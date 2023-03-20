@@ -5,14 +5,14 @@
 
 typedef struct s_all
 {
-	int	index_philosopher;
+	int		index_philosopher;
 	long	time_to_die;
 	long	time_to_eat;
 	long	time_to_sleep;
-	int	number_of_times;
+	int		number_of_times;
 	long	start_eating;
 	long	start_sleeping;
-	int	start_thinking;
+	long	start_thinking;
 }	t_all;
 
 int	ft_atoi(char *str);
