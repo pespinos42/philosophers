@@ -97,7 +97,7 @@ void	ft_fill_data(t_all *philosophers, int *data)
 	p = 0;
 	while (p < data[0])
 	{
-		philosophers[p].index_philosopher = p;
+		philosophers[p].index_philosopher = p + 1;
 		philosophers[p].time_to_die = data[1];
 		philosophers[p].time_to_eat = data[2];
 		philosophers[p].time_to_sleep = data[3];
