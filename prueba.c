@@ -2,48 +2,47 @@
 #include <pthread.h>
 
 pthread_mutex_t mutex;
+pthread_t hilo_incremento;
+pthread_t hilo_decremento;
+
 int variable_compartida = 100;
 
-void* hilo_incremento(void* arg) {
-    int i;
-    for (i = 0; i < 1000000; i++) {
+void    *incremento(void *arg)
+{
+    int p = 0;
+    
+    while (p < 10000)
+    {
         pthread_mutex_lock(&mutex);
         variable_compartida++;
         pthread_mutex_unlock(&mutex);
+        p++;
     }
-    return NULL;
+    return (NULL);
 }
 
-void* hilo_decremento(void* arg) {
-    int i;
-    for (i = 0; i < 1000000; i++) {
+void    *decremento(void *arg)
+{
+    int p = 0;
+    
+    while (p < 5000)
+    {
         pthread_mutex_lock(&mutex);
         variable_compartida--;
         pthread_mutex_unlock(&mutex);
+        p++;
     }
-    return NULL;
+    return (NULL);
 }
 
-int main() {
-    int i;
-    pthread_t hilos[4];
-
+int main()
+{
+    pthread_create(&hilo_incremento, NULL, incremento, NULL);
+    pthread_create(&hilo_decremento, NULL, decremento, NULL);
     pthread_mutex_init(&mutex, NULL);
-
-    for (i = 0; i < 4; i++) {
-		if (i % 2 == 0)
-        	pthread_create(&hilos[i], NULL, hilo_incremento, NULL);
-		else
-			pthread_create(&hilos[i], NULL, hilo_decremento, NULL);
-    }
-
-    for (i = 0; i < 4; i++) {
-        pthread_join(hilos[i], NULL);
-    }
-
-    printf("El valor de la variable compartida es %d\n", variable_compartida);
-
+    pthread_join(hilo_incremento, NULL);
+    pthread_join(hilo_decremento, NULL);
     pthread_mutex_destroy(&mutex);
-
-    return 0;
+    printf("VALOR FINAL VARIABLE COMPARTIDA -> %i\n", variable_compartida);
+    return(0);
 }
