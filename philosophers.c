@@ -30,7 +30,7 @@ int	ft_atoi(char *str)
 		str++;
 	}
 	return (sign * result);
-}	
+}
 
 int	*ft_get_args(int argc, char **argv)
 {
@@ -69,11 +69,11 @@ void	ft_print_number(int n)
 	}
 }
 
-void	ft_print_data(int *numbers, t_all *philosophers)
+void	ft_print_data(int n_elem, t_philosopher *philosophers)
 {
 	int	p = 0;
 
-	while (p < numbers[0])
+	while (p < n_elem)
 	{
 		printf("----------PHILOSOPHER %i----------\n", philosophers[p].index_philosopher);
 		printf("TIME TO DIE -> %li\n", philosophers[p].time_to_die);
@@ -83,6 +83,7 @@ void	ft_print_data(int *numbers, t_all *philosophers)
 		printf("START EATING -> %li\n", philosophers[p].start_eating);
 		printf("START SLEEPING -> %li\n", philosophers[p].start_sleeping);
 		printf("START THINKING -> %li\n", philosophers[p].start_thinking);
+		printf("INSTRUCTION -> %i\n", philosophers[p].instruction);
 		//ft_print_number(numbers[p]);
 		write(1, "\n", 1);
 		p++;
@@ -90,32 +91,74 @@ void	ft_print_data(int *numbers, t_all *philosophers)
 }
 
 //Rellenamos el array de filosofos con los datos introducidos
-void	ft_fill_data(t_all *philosophers, int *data)
+void	ft_fill_data(t_philosopher *philosophers, int *data, int n_arg)
 {
 	int	p;
 
 	p = 0;
+	printf("----------DATOS INTRODUCIDOS----------\n");
+	printf("ARG[0] -> %i\n", data[0]);
+	printf("ARG[1] -> %i\n", data[1]);
+	printf("ARG[2] -> %i\n", data[2]);
+	printf("ARG[3] -> %i\n", data[3]);
+	printf("ARG[4] -> %i\n", data[4]);
 	while (p < data[0])
 	{
 		philosophers[p].index_philosopher = p + 1;
 		philosophers[p].time_to_die = data[1];
 		philosophers[p].time_to_eat = data[2];
 		philosophers[p].time_to_sleep = data[3];
-		if (data[4])
+		if (n_arg == 5)
 			philosophers[p].number_of_times = data[4];
+		else
+			philosophers[p].number_of_times = -1;
 		p++;
 	}
 }
 
 //Creamos el array de filosofos segun el numero introducido en args[0]
-t_all	*ft_create_philosophers(int n_philosophers)
+t_philosopher	*ft_create_philosophers(int n_philosophers)
 {
-	t_all	*philosophers;
+	t_philosopher	*philosophers;
+	int				n;
 
+	n = 0;
 	philosophers = malloc (n_philosophers * sizeof(*philosophers));
 	if (!philosophers)
 		return (NULL);
+	while (n < n_philosophers)
+	{
+		philosophers[n].index_philosopher = -1;
+		philosophers[n].time_to_die = -1;
+		philosophers[n].time_to_eat = -1;
+		philosophers[n].time_to_sleep = -1;
+		philosophers[n].number_of_times = -1;
+		philosophers[n].start_eating = -1;
+		philosophers[n].start_sleeping = -1;
+		philosophers[n].start_thinking = -1;
+		philosophers[n].instruction = -1;
+		n++;
+	}
 	return (philosophers);
+}
+
+//REVISAR EL PLANTEAMIENTO DE LOS HILOS
+//HACERLO UNO POR CADA ACCIÓN (COMER, DORMIR, PENSAR) EN LUGAR DE POR CADA FILOSOFO
+pthread_t	*ft_create_threads(int n_philosophers)
+{
+	pthread_t	*threads;
+
+	threads = malloc (n_philosophers * sizeof (*threads));
+	if (!threads)
+		return (NULL);
+	return (threads);
+}
+
+void	ft_fill_t_all(t_all *data, int *args, int n_arg)
+{
+	data->philosophers = ft_create_philosophers(args[0]);
+	ft_fill_data(data->philosophers, args, n_arg);
+	data->threads = ft_create_threads(args[0]);
 }
 
 
@@ -127,19 +170,20 @@ t_all	*ft_create_philosophers(int n_philosophers)
 //	     Si no se especifica el programa se ejecutara hasta que un filosofo muera
 int main(int argc, char **argv)
 {
-	int	*args;
-	t_all	*philosophers;
+	int		*args;
+	t_all	all_phi;
 
 	if (argc == 5 || argc == 6)
 	{
 		args = ft_get_args(argc, argv);
 
 		//CREAMOS EL ARRAY DE FILOSOFOS SEGUN EL Nº INTRODUCIDO POR PARAMETRO
-		philosophers = ft_create_philosophers(args[0]);
-		ft_fill_data(philosophers, args);
+		//all_phi.philosophers = ft_create_philosophers(args[0]);
+		ft_fill_t_all(&all_phi, args, argc - 1);
+		//ft_fill_data(all_phi.philosophers, args, argc-1);
 
 
-		ft_print_data(args, philosophers);
+		ft_print_data(args[0], all_phi.philosophers);
 	}		
 	return (0);
 }

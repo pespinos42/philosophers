@@ -14,6 +14,7 @@ typedef struct s_philosopher
 	long	start_eating;
 	long	start_sleeping;
 	long	start_thinking;
+	int		instruction;
 }	t_philosopher;
 
 typedef struct s_all
@@ -22,11 +23,9 @@ typedef struct s_all
 	pthread_t		*threads;
 	int				*forks;
 	pthread_mutex_t	*mutex_forks;
-}
+}	t_all;
 
 int		ft_atoi(char *str);
 int		*ft_get_args(int argc, char **argv);
 void	ft_print_number(int n);
-void	ft_print_data(int *numbers, t_all *philosophers);
-void	ft_fill_data(t_all *philosophers, int *data);
-t_all	*ft_create_philosophers(int n_philosophers);
+void	ft_fill_data(t_philosopher *philosophers, int *data, int n_arg);
