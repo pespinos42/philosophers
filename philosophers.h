@@ -15,14 +15,14 @@ typedef struct s_philosopher
 	long	start_sleeping;
 	long	start_thinking;
 	int		instruction;
+	int		alive;
 }	t_philosopher;
 
 typedef struct s_all
 {
 	t_philosopher	*philosophers;
 	pthread_t		*threads;
-	int				*forks;
-	pthread_mutex_t	*mutex_forks;
+	pthread_mutex_t	*forks;
 }	t_all;
 
 int		ft_atoi(char *str);

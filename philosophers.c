@@ -137,6 +137,7 @@ t_philosopher	*ft_create_philosophers(int n_philosophers)
 		philosophers[n].start_sleeping = -1;
 		philosophers[n].start_thinking = -1;
 		philosophers[n].instruction = -1;
+		philosophers[n].alive = 1;
 		n++;
 	}
 	return (philosophers);
@@ -154,11 +155,55 @@ pthread_t	*ft_create_threads(int n_philosophers)
 	return (threads);
 }
 
+void	ft_destroy_mutex(int n_philosophers, pthread_mutex_t *forks)
+{
+	int	n;
+
+	n = 0;
+	while (n < n_philosophers)
+	{
+		pthread_mutex_destroy(&forks[n]);
+		n++;
+	}
+}
+
+pthread_mutex_t	*ft_create_forks(int n_philosophers)
+{
+	pthread_mutex_t	*forks;
+	int				n;
+
+	n = 0;
+	forks = malloc (n_philosophers * sizeof (*forks));
+	if (!forks)
+		return (NULL);
+	while (n < n_philosophers)
+	{
+		pthread_mutex_init(&forks[n], NULL);
+		n++;
+	}
+	return (forks);
+}
+
 void	ft_fill_t_all(t_all *data, int *args, int n_arg)
 {
 	data->philosophers = ft_create_philosophers(args[0]);
 	ft_fill_data(data->philosophers, args, n_arg);
-	data->threads = ft_create_threads(args[0]);
+	data->threads = ft_create_threads(3);
+	data->forks	= ft_create_forks(args[0]);
+}
+
+int	ft_all_alive(int n_philosophers, t_philosophers *philosobers)
+{
+	int n = 0;
+	int	alive = 1;
+
+	while (n < n_philosophers && alive == 1)
+	{
+		if (philosobers[n].alive == 0)
+			alive = 0;
+		n++;
+	}
+	return (alive);
 }
 
 
@@ -178,11 +223,7 @@ int main(int argc, char **argv)
 		args = ft_get_args(argc, argv);
 
 		//CREAMOS EL ARRAY DE FILOSOFOS SEGUN EL Nº INTRODUCIDO POR PARAMETRO
-		//all_phi.philosophers = ft_create_philosophers(args[0]);
 		ft_fill_t_all(&all_phi, args, argc - 1);
-		//ft_fill_data(all_phi.philosophers, args, argc-1);
-
-
 		ft_print_data(args[0], all_phi.philosophers);
 	}		
 	return (0);

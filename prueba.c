@@ -1,76 +1,25 @@
 #include <stdio.h>
-#include <pthread.h>
-#include <sys/time.h>
+#include <stdlib.h>
 
-typedef struct s_philosopher
+typedef struct s_prueba
 {
-	int		index_philosopher;
-	long	time_to_die;
-	long	time_to_eat;
-	long	time_to_sleep;
-	int		number_of_times;
-	long	start_eating;
-	long	start_sleeping;
-	long	start_thinking;
-}	t_philosopher;
+    int number;
+}   t_prueba;
 
-typedef struct s_all
+void ft_modify(t_prueba *prueba)
 {
-	t_philosopher	*philosophers;
-	pthread_t		*threads;
-	int				*forks;
-	pthread_mutex_t	*mutex;
-}	t_all;
-
-pthread_mutex_t mutex;
-pthread_t hilo_incremento;
-pthread_t hilo_decremento;
-
-int variable_compartida = 100;
-
-void    *incremento(void *arg)
-{
-    int p = 0;
-    
-    while (p < 10000000)
-    {
-        pthread_mutex_lock(&mutex);
-        variable_compartida++;
-        pthread_mutex_unlock(&mutex);
-        p++;
-    }
-    return (NULL);
-}
-
-void    *decremento(void *arg)
-{
-    int p = 0;
-    
-    while (p < 5000000)
-    {
-        pthread_mutex_lock(&mutex);
-        variable_compartida--;
-        pthread_mutex_unlock(&mutex);
-        p++;
-    }
-    return (NULL);
+    prueba[1].number = 200;
 }
 
 int main()
 {
-    struct timeval tv;
+    t_prueba *prueba;
 
-    pthread_create(&hilo_incremento, NULL, incremento, NULL);
-    pthread_create(&hilo_decremento, NULL, decremento, NULL);
-    pthread_mutex_init(&mutex, NULL);
-    gettimeofday(&tv, NULL);
-    printf("VALOR INICIAL VARIABLE COMPARTIDA -> %i\nMILISEGUNDOS -> %i\n\n", variable_compartida, tv.tv_usec/1000);
-    pthread_join(hilo_incremento, NULL);
-    gettimeofday(&tv, NULL);
-    printf("VALOR INTERMEDIO VARIABLE COMPARTIDA -> %i\nMILISEGUNDOS -> %i\n\n", variable_compartida, tv.tv_usec/1000);
-    pthread_join(hilo_decremento, NULL);
-    pthread_mutex_destroy(&mutex);
-    gettimeofday(&tv, NULL);
-    printf("VALOR FINAL VARIABLE COMPARTIDA -> %i\nMILISEGUNDOS -> %i\n\n", variable_compartida, tv.tv_usec/1000);
-    return(0);
+    prueba = malloc (2 * sizeof (*prueba));
+    if (!prueba)
+        return (-1);
+    prueba[0].number = 10;
+    prueba[1].number = 20;
+    ft_modify(prueba);
+    printf("PRUEBA.NUMBER = %i\n", prueba[1].number);
 }
