@@ -23,6 +23,7 @@ typedef struct s_all
 	t_philosopher	*philosophers;
 	pthread_t		*threads;
 	pthread_mutex_t	*forks;
+	int				active;
 }	t_all;
 
 int		ft_atoi(char *str);

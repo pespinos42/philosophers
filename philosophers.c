@@ -206,6 +206,11 @@ int	ft_all_alive(int n_philosophers, t_philosophers *philosobers)
 	return (alive);
 }
 
+void	ft_philosophers_odd(t_all *all_phi)
+{
+	
+}
+
 
 //args[0] -> numero de filosofos
 //args[1] -> tiempo que tardan en morir si no comen 	(en milisegundos)
@@ -224,6 +229,11 @@ int main(int argc, char **argv)
 
 		//CREAMOS EL ARRAY DE FILOSOFOS SEGUN EL Nº INTRODUCIDO POR PARAMETRO
 		ft_fill_t_all(&all_phi, args, argc - 1);
+		//COMPROBAMOS SI EL NUMERO DE FILOSOFOS ES PAR
+		if (args[0] % 2 == 0)
+			ft_philosophers_odd();
+		else
+			ft_philosophers_even();
 		ft_print_data(args[0], all_phi.philosophers);
 	}		
 	return (0);
