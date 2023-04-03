@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 typedef struct s_philosopher
 {
@@ -10,20 +11,31 @@ typedef struct s_philosopher
 	long	time_to_die;
 	long	time_to_eat;
 	long	time_to_sleep;
+	long	time_to_think;
 	int		number_of_times;
 	long	start_eating;
 	long	start_sleeping;
 	long	start_thinking;
-	int		instruction;
-	int		alive;
 }	t_philosopher;
+
+typedef struct s_fork
+{
+	pthread_mutex_t	fork_mutex;
+	int				using;
+}	t_fork;
 
 typedef struct s_all
 {
+	int				total_philosophers;
 	t_philosopher	*philosophers;
 	pthread_t		*threads;
-	pthread_mutex_t	*forks;
+	pthread_t		alive;
+	t_fork			*forks;
 	int				active;
+	pthread_mutex_t	m_a_alive;
+	int				all_alive;
+	pthread_mutex_t	m_message;
+	int				alive;
 }	t_all;
 
 int		ft_atoi(char *str);

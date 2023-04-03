@@ -83,11 +83,20 @@ void	ft_print_data(int n_elem, t_philosopher *philosophers)
 		printf("START EATING -> %li\n", philosophers[p].start_eating);
 		printf("START SLEEPING -> %li\n", philosophers[p].start_sleeping);
 		printf("START THINKING -> %li\n", philosophers[p].start_thinking);
-		printf("INSTRUCTION -> %i\n", philosophers[p].instruction);
 		//ft_print_number(numbers[p]);
 		write(1, "\n", 1);
 		p++;
 	}
+}
+
+void	*philosopher(void *arg)
+{
+	t_all	*data;
+	int		active;
+
+	data = (t_all *) arg;
+	active = data->active;
+	printf("FILOSOFO_ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
 }
 
 //Rellenamos el array de filosofos con los datos introducidos
@@ -136,8 +145,6 @@ t_philosopher	*ft_create_philosophers(int n_philosophers)
 		philosophers[n].start_eating = -1;
 		philosophers[n].start_sleeping = -1;
 		philosophers[n].start_thinking = -1;
-		philosophers[n].instruction = -1;
-		philosophers[n].alive = 1;
 		n++;
 	}
 	return (philosophers);
@@ -155,6 +162,26 @@ pthread_t	*ft_create_threads(int n_philosophers)
 	return (threads);
 }
 
+void	ft_initialize_threads(t_all *data)
+{
+	int	n;
+
+	n = 0;
+	while (n < data->total_philosophers)
+	{
+		data->active = n;
+		pthread_create(&data->threads[n], NULL, philosopher, data);
+		usleep(10000);
+		n++;
+	}
+	n = 0;
+	while (n < data->total_philosophers)
+	{
+		pthread_join(data->threads[n], NULL);
+		n++;
+	}
+}
+
 void	ft_destroy_mutex(int n_philosophers, pthread_mutex_t *forks)
 {
 	int	n;
@@ -167,7 +194,7 @@ void	ft_destroy_mutex(int n_philosophers, pthread_mutex_t *forks)
 	}
 }
 
-pthread_mutex_t	*ft_create_forks(int n_philosophers)
+pthread_mutex_t	*ft_create_mutex(int n_philosophers)
 {
 	pthread_mutex_t	*forks;
 	int				n;
@@ -184,33 +211,64 @@ pthread_mutex_t	*ft_create_forks(int n_philosophers)
 	return (forks);
 }
 
-void	ft_fill_t_all(t_all *data, int *args, int n_arg)
+t_fork	*ft_create_forks(int n_philosophers)
 {
-	data->philosophers = ft_create_philosophers(args[0]);
-	ft_fill_data(data->philosophers, args, n_arg);
-	data->threads = ft_create_threads(3);
-	data->forks	= ft_create_forks(args[0]);
-}
+	t_fork	*forks;
+	int		n;
 
-int	ft_all_alive(int n_philosophers, t_philosophers *philosobers)
-{
-	int n = 0;
-	int	alive = 1;
-
-	while (n < n_philosophers && alive == 1)
+	n = 0;
+	forks = malloc (n_philosophers * sizeof (*forks));
+	if (!forks)
+		return (NULL);
+	while (n < n_philosophers)
 	{
-		if (philosobers[n].alive == 0)
-			alive = 0;
+		forks[n].using = 0;
+		pthread_mutex_init(&forks[n].fork_mutex, NULL);
 		n++;
 	}
-	return (alive);
+	return (forks);
 }
 
-void	ft_philosophers_odd(t_all *all_phi)
+time_t	ft_get_time(void)
 {
-	
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 }
 
+void	*ft_all_alive(void *arg)
+{
+	t_all	*data;
+	int		n;
+
+	data = (t_all *) arg;
+	while (data->alive == 1)
+	{
+		n = 0;
+		while(n < data->total_philosophers)
+		{
+			if (data->philosophers[n].)		
+		}
+
+	}
+}
+
+void	ft_fill_t_all(t_all *data, int *args, int n_arg)
+{
+	data->total_philosophers = args[0];
+	data->philosophers = ft_create_philosophers(args[0]);
+	ft_fill_data(data->philosophers, args, n_arg);
+	data->threads = ft_create_threads(args[0]);
+	ft_initialize_threads(data);
+	data->alive = *(ft_create_threads(1));
+	pthread_create(&data->alive, NULL, ft_all_alive, data);
+	data->forks	= ft_create_forks(args[0]);
+	data->m_a_alive = *(ft_create_mutex(1));
+	data->all_alive = 1;
+	data->m_message = *(ft_create_mutex(1));
+	data->alive = 1;
+}
 
 //args[0] -> numero de filosofos
 //args[1] -> tiempo que tardan en morir si no comen 	(en milisegundos)
@@ -230,10 +288,6 @@ int main(int argc, char **argv)
 		//CREAMOS EL ARRAY DE FILOSOFOS SEGUN EL Nº INTRODUCIDO POR PARAMETRO
 		ft_fill_t_all(&all_phi, args, argc - 1);
 		//COMPROBAMOS SI EL NUMERO DE FILOSOFOS ES PAR
-		if (args[0] % 2 == 0)
-			ft_philosophers_odd();
-		else
-			ft_philosophers_even();
 		ft_print_data(args[0], all_phi.philosophers);
 	}		
 	return (0);
