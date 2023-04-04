@@ -1,5 +1,15 @@
 #include "philosophers.h"
 
+int	ft_strlen(char *str)
+{
+	int	len;
+
+	len = 0;
+	while (str[len])
+		len++;
+	return (len);
+}
+
 int	ft_atoi(char *str)
 {
 	int result;
@@ -49,7 +59,7 @@ int	*ft_get_args(int argc, char **argv)
 	return (args);
 }
 
-void	ft_print_number(int n)
+void	ft_print_number(long int n)
 {
 	char	number = 0;
 
@@ -89,6 +99,14 @@ void	ft_print_data(int n_elem, t_philosopher *philosophers)
 	}
 }
 
+long int	ft_get_time(void)
+{
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+}
+
 void	*philosopher(void *arg)
 {
 	t_all	*data;
@@ -96,7 +114,15 @@ void	*philosopher(void *arg)
 
 	data = (t_all *) arg;
 	active = data->active;
-	printf("FILOSOFO_ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
+	data->philosophers[active].start_thread = ft_get_time();
+	while (data->all_alive == 1)
+	{
+		printf("FILOSOFO_ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
+		usleep(200000);
+	}
+	while (data->message_end == 0)
+		usleep(100);
+	return (NULL);
 }
 
 //Rellenamos el array de filosofos con los datos introducidos
@@ -145,6 +171,7 @@ t_philosopher	*ft_create_philosophers(int n_philosophers)
 		philosophers[n].start_eating = -1;
 		philosophers[n].start_sleeping = -1;
 		philosophers[n].start_thinking = -1;
+		philosophers[n].start_thread = -1;
 		n++;
 	}
 	return (philosophers);
@@ -229,28 +256,59 @@ t_fork	*ft_create_forks(int n_philosophers)
 	return (forks);
 }
 
-time_t	ft_get_time(void)
+void	ft_print_message(t_all *data, long int time, int philosopher, char *message)
 {
-	struct timeval	tv;
-
-	gettimeofday(&tv, NULL);
-	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+	printf("DENTRO DE LA IMPRESION DEL MENSAJE\n");
+	pthread_mutex_lock(&data->m_message);
+	ft_print_number(time);
+	write(1, " ", 1);
+	ft_print_number(philosopher);
+	write(1, " ", 1);
+	write(1, message, ft_strlen(message));
+	write(1, "\n", 1);
+	data->message_end = 1;
 }
 
 void	*ft_all_alive(void *arg)
 {
-	t_all	*data;
-	int		n;
+	t_all		*data;
+	int			n;
+	long int	time;
+	long int	time_start;
 
 	data = (t_all *) arg;
-	while (data->alive == 1)
+	n = 0;
+	time = 0;
+	printf("COMIENZO DE FT_ALL_ALIVE -> %li\n", ft_get_time());
+	printf("DENTRO DE FT_ALL_ALIVE\n");
+	printf("TOTAL FILOSOFOS -> %i\n", data->total_philosophers);
+	while (data->all_alive == 1)
 	{
-		n = 0;
-		while(n < data->total_philosophers)
+		//printf("DENTRO DEL PRIMER WHILE\n");
+		while (n < data->total_philosophers && data->all_alive == 1)
 		{
-			if (data->philosophers[n].)		
+			//printf("DENTRO DEL SEGUNDO WHILE\n");
+			while (data->philosophers[n].start_thread == -1)
+			{
+				//printf("ESPERANDO FILOSOFO %i\n", n+1);
+				usleep(10000);
+			}
+			if (data->philosophers[n].start_eating == -1)
+				time_start = data->philosophers[n].start_thread;
+			else
+				time_start = data->philosophers[n].start_eating;
+			time = ft_get_time();
+			if ((time - time_start) >= data->philosophers[n].time_to_die)
+			{
+				pthread_mutex_lock(&data->m_a_alive);
+				data->all_alive = 0;
+				pthread_mutex_unlock(&data->m_a_alive);
+				ft_print_message(data, time, data->philosophers[n].index_philosopher, "died");
+			}
+			n++;
 		}
-
+		n = 0;
+		usleep(1000);
 	}
 }
 
@@ -259,15 +317,16 @@ void	ft_fill_t_all(t_all *data, int *args, int n_arg)
 	data->total_philosophers = args[0];
 	data->philosophers = ft_create_philosophers(args[0]);
 	ft_fill_data(data->philosophers, args, n_arg);
-	data->threads = ft_create_threads(args[0]);
-	ft_initialize_threads(data);
-	data->alive = *(ft_create_threads(1));
-	pthread_create(&data->alive, NULL, ft_all_alive, data);
 	data->forks	= ft_create_forks(args[0]);
 	data->m_a_alive = *(ft_create_mutex(1));
 	data->all_alive = 1;
+	data->message_end = 0;
+	data->threads = ft_create_threads(args[0]);
+	data->t_alive = *(ft_create_threads(1));
+	pthread_create(&data->t_alive, NULL, ft_all_alive, data);
 	data->m_message = *(ft_create_mutex(1));
-	data->alive = 1;
+	pthread_detach(data->t_alive);
+	ft_initialize_threads(data);
 }
 
 //args[0] -> numero de filosofos
@@ -285,10 +344,8 @@ int main(int argc, char **argv)
 	{
 		args = ft_get_args(argc, argv);
 
-		//CREAMOS EL ARRAY DE FILOSOFOS SEGUN EL Nº INTRODUCIDO POR PARAMETRO
 		ft_fill_t_all(&all_phi, args, argc - 1);
-		//COMPROBAMOS SI EL NUMERO DE FILOSOFOS ES PAR
-		ft_print_data(args[0], all_phi.philosophers);
-	}		
+	}
+	printf("FINAL DEL PROGRAMA -> %li\n", ft_get_time());
 	return (0);
 }
