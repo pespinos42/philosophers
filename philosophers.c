@@ -90,9 +90,9 @@ void	ft_print_data(int n_elem, t_philosopher *philosophers)
 		printf("TIME TO EAT -> %li\n", philosophers[p].time_to_eat);
 		printf("TIME TO SLEEP -> %li\n", philosophers[p].time_to_sleep);
 		printf("NUMBER OF TIMES -> %i\n", philosophers[p].number_of_times);
-		printf("START EATING -> %li\n", philosophers[p].start_eating);
-		printf("START SLEEPING -> %li\n", philosophers[p].start_sleeping);
-		printf("START THINKING -> %li\n", philosophers[p].start_thinking);
+		printf("START EATING -> %li\n", philosophers[p].last_eating);
+		//printf("START SLEEPING -> %li\n", philosophers[p].last_sleeping);
+		//printf("START THINKING -> %li\n", philosophers[p].last_thinking);
 		//ft_print_number(numbers[p]);
 		write(1, "\n", 1);
 		p++;
@@ -110,15 +110,70 @@ long int	ft_get_time(void)
 void	*philosopher(void *arg)
 {
 	t_all	*data;
-	int		active;
+	int			active;
+	int			fork_right;
+	int			fork_left;
+	long int	time;
+	long int	stop_time;
 
 	data = (t_all *) arg;
 	active = data->active;
+	fork_right = active;
+	if (active)
+		fork_left = data->total_philosophers - 1;
+	else
+		fork_left = lock1 - 1;
 	data->philosophers[active].start_thread = ft_get_time();
-	while (data->all_alive == 1)
+	while (data->all_alive == 1)//FALTA IMPLEMENTAR EL NUMERO DE VECES QUE HA COMIDO
 	{
-		printf("FILOSOFO_ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
-		usleep(200000);
+		while (data->forks[fork_right].using == 1 || data->forks[fork_left].using == 1)
+			usleep(1000);
+		pthread_mutex_lock(&data->forks[fork_right].fork_mutex);
+		pthread_mutex_lock(&data->forks[fork_left].fork_mutex);
+		if (data->all_alive == 1)
+		{
+			pthread_mutex_lock(&data->m_message);
+			ft_print_message(data, ft_get_time(), active, " has taken a fork");
+			ft_print_message(data, ft_get_time(), active, " has taken a fork");
+			ft_print_message(data, ft_get_time(), active, " is eating");
+			pthread_mutex_unlock(&data->m_message);
+		}
+		time = ft_get_time();
+		stop_time = time + data->philosophers[active].time_to_eat;
+		while (ft_get_time() < stop_time && data->all_alive == 1)
+			usleep(1000);
+		data->philosophers[active].last_eating = ft_get_time();
+		pthread_mutex_unlock(&data->forks[fork_left].fork_mutex);
+		pthread_mutex_unlock(&data->forks[fork_right].fork_mutex);
+		if (data->all_alive == 1)
+		{
+			pthread_mutex_lock(&data->m_message);
+			ft_print_message(data, ft_get_time(), active, " is sleeping");
+			pthread_mutex_unlock(&data->m_message);
+		}
+		time = ft_get_time();
+		stop_time = time + data->philosophers[active].time_to_sleep;
+		while (ft_get_time() < stop_time && data->all_alive == 1)
+			usleep(1000);
+		//Ahora calculamos el tiempo de pensar
+		time = ft_get_time();
+		stop_time = (time - data->philosophers[active].last_eating) / 2;
+		if (stop_time > 500)
+			stop_time = 500;
+		if (stop_time > 0)
+		{
+			if (data->all_alive == 1)
+			{
+				pthread_mutex_lock(&data->m_message);
+				ft_print_message(data, ft_get_time(), active, " is thinking");
+				pthread_mutex_unlock(&data->m_message);
+			}
+			stop_time += time;
+			while (ft_get_time() < stop_time && data->all_alive == 1)
+				usleep(1000);
+		}		
+		//printf("FILOSOFO_ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
+		//usleep(200000);		
 	}
 	while (data->message_end == 0)
 		usleep(100);
@@ -168,9 +223,9 @@ t_philosopher	*ft_create_philosophers(int n_philosophers)
 		philosophers[n].time_to_eat = -1;
 		philosophers[n].time_to_sleep = -1;
 		philosophers[n].number_of_times = -1;
-		philosophers[n].start_eating = -1;
-		philosophers[n].start_sleeping = -1;
-		philosophers[n].start_thinking = -1;
+		philosophers[n].last_eating = -1;
+		//philosophers[n].last_sleeping = -1;
+		//philosophers[n].last_thinking = -1;
 		philosophers[n].start_thread = -1;
 		n++;
 	}
@@ -293,10 +348,10 @@ void	*ft_all_alive(void *arg)
 				//printf("ESPERANDO FILOSOFO %i\n", n+1);
 				usleep(10000);
 			}
-			if (data->philosophers[n].start_eating == -1)
+			if (data->philosophers[n].last_eating == -1)
 				time_start = data->philosophers[n].start_thread;
 			else
-				time_start = data->philosophers[n].start_eating;
+				time_start = data->philosophers[n].last_eating;
 			time = ft_get_time();
 			if ((time - time_start) >= data->philosophers[n].time_to_die)
 			{

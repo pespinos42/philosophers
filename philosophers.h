@@ -13,9 +13,9 @@ typedef struct s_philosopher
 	long		time_to_sleep;
 	long		time_to_think;
 	int			number_of_times;
-	long int	start_eating;
-	long int	start_sleeping;
-	long int	start_thinking;
+	long int	last_eating;
+	//long int	last_sleeping;
+	//long int	last_thinking;
 	long int	start_thread;
 }	t_philosopher;
 
