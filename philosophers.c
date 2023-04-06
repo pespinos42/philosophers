@@ -10,11 +10,11 @@ int	ft_strlen(char *str)
 	return (len);
 }
 
-int	ft_atoi(char *str)
+long int	ft_atoi(char *str)
 {
-	int result;
-	int s;
-	int sign;
+	long int	result;
+	int 		s;
+	int 		sign;
 
 	result = 0;
 	s = 0;
@@ -42,18 +42,18 @@ int	ft_atoi(char *str)
 	return (sign * result);
 }
 
-int	*ft_get_args(int argc, char **argv)
+long int	*ft_get_args(int argc, char **argv)
 {
-	int	*args;
-	int	n;
+	long int	*args;
+	int			n;
 
-	n = 0;
+	n = 1;
 	args = malloc ((argc - 1) * sizeof (*args));
 	if (!args)
 		return (NULL);
-	while (n < (argc - 1))
+	while (n < argc)
 	{
-		args[n] = ft_atoi(argv[n + 1]);
+		args[n-1] = ft_atoi(argv[n]);
 		n++;
 	}
 	return (args);
@@ -115,23 +115,32 @@ void	*philosopher(void *arg)
 	int			fork_left;
 	long int	time;
 	long int	stop_time;
+	int			n_times;
 
+	n_times = 0;
 	data = (t_all *) arg;
 	active = data->active;
 	fork_right = active;
-	if (active)
-		fork_left = data->total_philosophers - 1;
+	//printf("FILOSOFO ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
+	if (active == data->total_philosophers - 1)
+		fork_left = 0;
 	else
-		fork_left = lock1 - 1;
+		fork_left = fork_right + 1;
+	//printf("AL FILOSOFO %i LE CORRESPONDEN LOS TENEDORES %i Y %i\n", data->philosophers[active].index_philosopher, fork_right, fork_left);
 	data->philosophers[active].start_thread = ft_get_time();
-	while (data->all_alive == 1)//FALTA IMPLEMENTAR EL NUMERO DE VECES QUE HA COMIDO
+	while (data->all_alive == 1 && data->philosophers[active].number_exit == 0)//FALTA IMPLEMENTAR EL NUMERO DE VECES QUE HA COMIDO
 	{
+		//printf("FILOSOFO %i --- DENTRO DEL WHILE DATA_ALL_ALIVE\n", data->philosophers[active].index_philosopher);
 		while (data->forks[fork_right].using == 1 || data->forks[fork_left].using == 1)
-			usleep(1000);
+		{
+			printf("FILOSOFO %i ESPERANDO TENEDOR\n", data->philosophers[active].index_philosopher);
+			usleep(100);
+		}
 		pthread_mutex_lock(&data->forks[fork_right].fork_mutex);
 		pthread_mutex_lock(&data->forks[fork_left].fork_mutex);
 		if (data->all_alive == 1)
 		{
+			printf("FILOSOFO %i BLOQUEANDO MUTEX PARA IMPRIMIR MENSAJE COMIDA\n", data->philosophers[active].index_philosopher);
 			pthread_mutex_lock(&data->m_message);
 			ft_print_message(data, ft_get_time(), active, " has taken a fork");
 			ft_print_message(data, ft_get_time(), active, " has taken a fork");
@@ -145,53 +154,63 @@ void	*philosopher(void *arg)
 		data->philosophers[active].last_eating = ft_get_time();
 		pthread_mutex_unlock(&data->forks[fork_left].fork_mutex);
 		pthread_mutex_unlock(&data->forks[fork_right].fork_mutex);
-		if (data->all_alive == 1)
+		n_times++;
+		if (data->philosophers[active].number_of_times != -1 && n_times >= data->philosophers[active].number_of_times)
 		{
-			pthread_mutex_lock(&data->m_message);
-			ft_print_message(data, ft_get_time(), active, " is sleeping");
-			pthread_mutex_unlock(&data->m_message);
+			data->philosophers[active].number_exit = 1;
+			printf("FILOSOFO %i HA FINALIZADO DE COMER\n", data->philosophers[active].index_philosopher);
 		}
-		time = ft_get_time();
-		stop_time = time + data->philosophers[active].time_to_sleep;
-		while (ft_get_time() < stop_time && data->all_alive == 1)
-			usleep(1000);
-		//Ahora calculamos el tiempo de pensar
-		time = ft_get_time();
-		stop_time = (time - data->philosophers[active].last_eating) / 2;
-		if (stop_time > 500)
-			stop_time = 500;
-		if (stop_time > 0)
+		if (data->philosophers[active].number_exit == 0)
 		{
 			if (data->all_alive == 1)
 			{
 				pthread_mutex_lock(&data->m_message);
-				ft_print_message(data, ft_get_time(), active, " is thinking");
+				ft_print_message(data, ft_get_time(), active, " is sleeping");
 				pthread_mutex_unlock(&data->m_message);
 			}
-			stop_time += time;
+			time = ft_get_time();
+			stop_time = time + data->philosophers[active].time_to_sleep;
 			while (ft_get_time() < stop_time && data->all_alive == 1)
 				usleep(1000);
-		}		
-		//printf("FILOSOFO_ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
-		//usleep(200000);		
+			//Ahora calculamos el tiempo de pensar
+			// time = ft_get_time();
+			// stop_time = (time - data->philosophers[active].last_eating) / 2;
+			// if (stop_time > 500)
+			// 	stop_time = 500;
+			// if (stop_time > 0)
+			// {
+				if (data->all_alive == 1)
+				{
+					pthread_mutex_lock(&data->m_message);
+					ft_print_message(data, ft_get_time(), active, " is thinking");
+					pthread_mutex_unlock(&data->m_message);
+				}
+				// stop_time += time;
+				// while (ft_get_time() < stop_time && data->all_alive == 1)
+				// 	usleep(1000);
+			//}		
+			//printf("FILOSOFO_ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
+			//usleep(200000);
+		}
 	}
-	while (data->message_end == 0)
+	while (data->message_end == 0 && data->philosophers[active].number_exit == 0)
 		usleep(100);
+	printf("FINAL FILOSOFO %i\n", data->philosophers[active].index_philosopher);
 	return (NULL);
 }
 
 //Rellenamos el array de filosofos con los datos introducidos
-void	ft_fill_data(t_philosopher *philosophers, int *data, int n_arg)
+void	ft_fill_data(t_philosopher *philosophers, long int *data, int n_arg)
 {
 	int	p;
 
 	p = 0;
-	printf("----------DATOS INTRODUCIDOS----------\n");
-	printf("ARG[0] -> %i\n", data[0]);
-	printf("ARG[1] -> %i\n", data[1]);
-	printf("ARG[2] -> %i\n", data[2]);
-	printf("ARG[3] -> %i\n", data[3]);
-	printf("ARG[4] -> %i\n", data[4]);
+	// printf("----------DATOS INTRODUCIDOS----------\n");
+	// printf("ARG[0] -> %i\n", data[0]);
+	// printf("ARG[1] -> %i\n", data[1]);
+	// printf("ARG[2] -> %i\n", data[2]);
+	// printf("ARG[3] -> %i\n", data[3]);
+	// printf("ARG[4] -> %i\n", data[4]);
 	while (p < data[0])
 	{
 		philosophers[p].index_philosopher = p + 1;
@@ -227,6 +246,7 @@ t_philosopher	*ft_create_philosophers(int n_philosophers)
 		//philosophers[n].last_sleeping = -1;
 		//philosophers[n].last_thinking = -1;
 		philosophers[n].start_thread = -1;
+		philosophers[n].number_exit = 0;
 		n++;
 	}
 	return (philosophers);
@@ -313,11 +333,12 @@ t_fork	*ft_create_forks(int n_philosophers)
 
 void	ft_print_message(t_all *data, long int time, int philosopher, char *message)
 {
-	printf("DENTRO DE LA IMPRESION DEL MENSAJE\n");
-	pthread_mutex_lock(&data->m_message);
+	//printf("DENTRO DE LA IMPRESION DEL MENSAJE\n");
+	//pthread_mutex_lock(&data->m_message);
+	//printf("MENSAJE --- BLOQUEADO MUTEX\n");
 	ft_print_number(time);
 	write(1, " ", 1);
-	ft_print_number(philosopher);
+	ft_print_number(data->philosophers[philosopher].index_philosopher);
 	write(1, " ", 1);
 	write(1, message, ft_strlen(message));
 	write(1, "\n", 1);
@@ -334,10 +355,10 @@ void	*ft_all_alive(void *arg)
 	data = (t_all *) arg;
 	n = 0;
 	time = 0;
-	printf("COMIENZO DE FT_ALL_ALIVE -> %li\n", ft_get_time());
-	printf("DENTRO DE FT_ALL_ALIVE\n");
-	printf("TOTAL FILOSOFOS -> %i\n", data->total_philosophers);
-	while (data->all_alive == 1)
+	//printf("COMIENZO DE FT_ALL_ALIVE -> %li\n", ft_get_time());
+	//printf("DENTRO DE FT_ALL_ALIVE\n");
+	//printf("TOTAL FILOSOFOS -> %i\n", data->total_philosophers);
+	while (data->all_alive == 1 && data->message_end == 0)
 	{
 		//printf("DENTRO DEL PRIMER WHILE\n");
 		while (n < data->total_philosophers && data->all_alive == 1)
@@ -346,7 +367,7 @@ void	*ft_all_alive(void *arg)
 			while (data->philosophers[n].start_thread == -1)
 			{
 				//printf("ESPERANDO FILOSOFO %i\n", n+1);
-				usleep(10000);
+				usleep(1000);
 			}
 			if (data->philosophers[n].last_eating == -1)
 				time_start = data->philosophers[n].start_thread;
@@ -355,10 +376,15 @@ void	*ft_all_alive(void *arg)
 			time = ft_get_time();
 			if ((time - time_start) >= data->philosophers[n].time_to_die)
 			{
-				pthread_mutex_lock(&data->m_a_alive);
-				data->all_alive = 0;
-				pthread_mutex_unlock(&data->m_a_alive);
-				ft_print_message(data, time, data->philosophers[n].index_philosopher, "died");
+				if (data->philosophers[n].number_exit == 0)
+				{
+					pthread_mutex_lock(&data->m_a_alive);
+					data->all_alive = 0;
+					pthread_mutex_unlock(&data->m_a_alive);
+					pthread_mutex_lock(&data->m_message);
+					ft_print_message(data, time, n, " died");
+					pthread_mutex_unlock(&data->m_message);
+				}
 			}
 			n++;
 		}
@@ -367,9 +393,10 @@ void	*ft_all_alive(void *arg)
 	}
 }
 
-void	ft_fill_t_all(t_all *data, int *args, int n_arg)
+void	ft_fill_t_all(t_all *data, long int *args, int n_arg)
 {
 	data->total_philosophers = args[0];
+	data->message_end = 0;
 	data->philosophers = ft_create_philosophers(args[0]);
 	ft_fill_data(data->philosophers, args, n_arg);
 	data->forks	= ft_create_forks(args[0]);
@@ -384,6 +411,68 @@ void	ft_fill_t_all(t_all *data, int *args, int n_arg)
 	ft_initialize_threads(data);
 }
 
+int	ft_check_only_numbers(int argc, char **argv)
+{
+	int	arg;
+	int	letter;
+	int	check;
+
+	arg = 1;
+	letter = 0;
+	check = 1;
+	while (arg < argc && check == 1)
+	{
+		while (letter < ft_strlen(argv[arg]) && check == 1)
+		{
+			if (argv[arg][letter] < 48 || argv[arg][letter] > 57)
+				check = 0;
+			letter++;
+		}
+		letter = 0;
+		arg++;
+	}
+	return (check);
+}
+
+int	ft_check_limits(long int *args, int n_args)
+{
+	int	n;
+	int	check;
+
+	n = 0;
+	check = 1;
+	while (n < n_args && check == 1)
+	{
+		if (args[n] > 2147483647)
+			check = 0;
+		n++;
+	}
+	return (check);
+}
+
+int	ft_check_args(int argc, char **argv)
+{
+	long int	*args;
+
+	if (ft_check_only_numbers(argc, argv) != 1)
+	{
+		printf("ERROR --- HAY CARACTERES NO NUMERICOS\n");
+		return (-1);
+	}
+	args = ft_get_args(argc, argv);
+	if (ft_check_limits(args, argc - 1) != 1)
+	{
+		printf("ERROR --- HAY VALORES QUE EXCEDEN LOS LIMITES DE INT\n");
+		return (-1);
+	}
+	if (args[0] <= 0)
+	{
+		printf("ERROR --- NUMERO DE FILOSOFOS ERRONEO\n");
+		return (-1);
+	}
+	return (1);	
+}
+
 //args[0] -> numero de filosofos
 //args[1] -> tiempo que tardan en morir si no comen 	(en milisegundos)
 //args[2] -> tiempo que tardan en comer			(en milisegundos)
@@ -392,15 +481,29 @@ void	ft_fill_t_all(t_all *data, int *args, int n_arg)
 //	     Si no se especifica el programa se ejecutara hasta que un filosofo muera
 int main(int argc, char **argv)
 {
-	int		*args;
-	t_all	all_phi;
+	long int	*args;
+	t_all		all_phi;
 
 	if (argc == 5 || argc == 6)
 	{
-		args = ft_get_args(argc, argv);
+		if (ft_check_args(argc, argv) == 1)
+		{
+			args = ft_get_args(argc, argv);
 
-		ft_fill_t_all(&all_phi, args, argc - 1);
+			// printf("PARAMETROS CORRECTOS\n");
+
+			// printf("----------DATOS INTRODUCIDOS----------\n");
+			// printf("ARG[0] -> %li\n", args[0]);
+			// printf("ARG[1] -> %li\n", args[1]);
+			// printf("ARG[2] -> %li\n", args[2]);
+			// printf("ARG[3] -> %li\n", args[3]);
+			// printf("ARG[4] -> %li\n", args[4]);
+			
+			ft_fill_t_all(&all_phi, args, argc - 1);
+		}
 	}
-	printf("FINAL DEL PROGRAMA -> %li\n", ft_get_time());
+	//printf("FINAL DEL PROGRAMA -> %li\n", ft_get_time());
+	all_phi.message_end = 1;
+	printf("FINALIZADO EL PROGRAMA\n");
 	return (0);
 }
