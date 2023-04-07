@@ -213,7 +213,7 @@ void	*philosopher(void *arg)
 			//usleep(200000);
 		}
 	}
-	while (data->message_end == 0 && data->philosophers[active].number_exit == 0)
+	while (data->message_end == 0 && data->philosophers[active].number_exit == 0 && data->all_alive == 1)
 		usleep(100);
 	//printf("FINAL FILOSOFO %i\n", data->philosophers[active].index_philosopher);
 	return (NULL);
