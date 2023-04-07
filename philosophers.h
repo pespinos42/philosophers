@@ -38,7 +38,7 @@ typedef struct s_all
 	int				all_alive;
 	pthread_mutex_t	m_message;
 	int				message_end;
-	int				send_exit;
+	//int				send_exit;
 }	t_all;
 
 int				ft_strlen(char *str);
@@ -52,7 +52,7 @@ void			ft_fill_data(t_philosopher *philosophers, long int *data, int n_arg);
 t_philosopher	*ft_create_philosophers(int n_philosophers);
 pthread_t		*ft_create_threads(int n_philosophers);
 void			ft_initialize_threads(t_all *data);
-void			ft_destroy_mutex(int n_philosophers, pthread_mutex_t *forks);
+void			ft_destroy_mutex(int n_philosophers, t_fork *forks);
 pthread_mutex_t	*ft_create_mutex(int n_philosophers);
 t_fork			*ft_create_forks(int n_philosophers);
 void			ft_print_message(t_all *data, long int time, int philosopher, char *message);
