@@ -165,9 +165,13 @@ void	*philosopher(void *arg)
 			stop_time = time + data->philosophers[active].time_to_eat;
 			//printf("EL FILOSOFO %i ESTA PREPARADO PARA COMER\n", active+1);
 			while (ft_get_time() < stop_time && data->all_alive == 1)
+			{
+				//printf("FILOSOFO %i STOP_TIME -> %li	TIME -> %li\n", active + 1, stop_time, ft_get_time());
 				usleep(1000);
+			}
 			//printf("EL FILOSOFO %i HA TERMINADO DE COMER\n", active+1);
 			data->philosophers[active].last_eating = ft_get_time();
+			//printf("EL FILOSOFO %i HA ACTUALIZADO LA ULTIMA VEZ QUE COMIO A %li\n", active + 1, data->philosophers[active].last_eating);
 			pthread_mutex_unlock(&data->forks[fork_left].fork_mutex);
 			pthread_mutex_unlock(&data->forks[fork_right].fork_mutex);
 			data->forks[fork_left].using = 0;
@@ -394,9 +398,15 @@ void	*ft_all_alive(void *arg)
 			{
 				//printf("----------CUANDO START_TRHEAD != -1----------\n----------FILOSOFO %i----------\n", n + 1);
 				if (data->philosophers[n].last_eating == -1)
+				{
+					//printf("FILOSOFO %i HA ENTRADO EN LAST_EATING == -1\n", n+1);
 					time_start = data->philosophers[n].start_thread;
+				}
 				else
+				{
+					//printf("FILOSOFO %i HA ENTRADO EN LAST_EATING != -1\n", n+1);
 					time_start = data->philosophers[n].last_eating;
+				}
 				time = ft_get_time();
 				if ((time - time_start) >= data->philosophers[n].time_to_die)
 				{
@@ -407,8 +417,10 @@ void	*ft_all_alive(void *arg)
 						pthread_mutex_unlock(&data->m_a_alive);
 						pthread_mutex_lock(&data->m_message);
 						ft_print_message(data, time, n, " died");
+						//printf("FILOSOFO %i LAST EAT -> %li\n", n+1, data->philosophers[n].last_eating);
+						//printf("TIME -> %li\t\tTIME_START -> %li\t\tTIME_TO_DIE ->%li\n", time, time_start, data->philosophers[n].time_to_die);
 						pthread_mutex_unlock(&data->m_message);
-						printf("EL FILOSOFO %i HA MUERTO\n", n+1);
+						//printf("EL FILOSOFO %i HA MUERTO\n", n+1);
 					}
 				}
 			}
@@ -420,7 +432,7 @@ void	*ft_all_alive(void *arg)
 		//printf("DATA ALL_ALIVE = %i\t\t\tMESSAGE_END = %i\n", data->all_alive, data->message_end);
 		usleep(1000);
 	}
-	printf("HA SALIDO DEL CONTROL\n");
+	//printf("HA SALIDO DEL CONTROL\n");
 	return (NULL);
 }
 
@@ -528,6 +540,6 @@ int main(int argc, char **argv)
 	}
 	//printf("FINAL DEL PROGRAMA -> %li\n", ft_get_time());
 	all_phi.message_end = 1;
-	printf("CAMBIADO MESSAGE_END EN MAIN\n");
+	//printf("CAMBIADO MESSAGE_END EN MAIN\n");
 	return (0);
 }
