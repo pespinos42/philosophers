@@ -145,7 +145,7 @@ void	*philosopher(void *arg)
 		while (data->forks[fork_right].using == 1 || data->forks[fork_left].using == 1)
 		{
 			//printf("FILOSOFO %i ESPERANDO TENEDOR\n", data->philosophers[active].index_philosopher);
-			usleep(1000);
+			usleep(100);
 		}
 		//printf("FILOSOFO %i TIENE LOS TENEDORES\n", active + 1);
 		if (data->all_alive == 1) //COMER
@@ -199,7 +199,7 @@ void	*philosopher(void *arg)
 			//Ahora calculamos el tiempo de pensar
 			time = ft_get_time();
 			//printf("FILOSOFO %i TIME -> %li		LAST_EATING -> %li\n", active+1, time, data->philosophers[active].last_eating);
-			stop_time = (data->philosophers[active].time_to_die - (time - data->philosophers[active].last_eating)) / 2;
+			stop_time = (data->philosophers[active].time_to_die - ((time - data->philosophers[active].last_eating) + data->philosophers[active].time_to_eat)) / 2;
 			//printf("FILOSOFO %i STOP TIME THINKING -> %li\n", active+1, stop_time);
 			if (stop_time > 500)
 				stop_time = 500;
@@ -211,10 +211,14 @@ void	*philosopher(void *arg)
 					ft_print_message(data, ft_get_time(), active, " is thinking");
 					pthread_mutex_unlock(&data->m_message);
 				}
-				stop_time += time;
-				while (ft_get_time() < stop_time && data->all_alive == 1)
-					usleep(1000);
-			}		
+				if (stop_time > 100)
+				{
+					stop_time += time;
+					while (ft_get_time() < stop_time && data->all_alive == 1)
+						usleep(1000);
+				}
+			}
+			stop_time = 0;
 			//printf("FILOSOFO_ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
 			//usleep(200000);
 		}
@@ -504,6 +508,8 @@ int	ft_check_args(int argc, char **argv)
 	if (ft_check_limits(args, argc - 1) != 1)
 		return (-1);
 	if (args[0] <= 0)
+		return (-1);
+	if (argc == 6 && args[4] <= 0)
 		return (-1);
 	return (1);	
 }
