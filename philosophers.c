@@ -117,9 +117,9 @@ void	*philosopher(void *arg)
 	long int	stop_time;
 	int			n_times;
 
-	n_times = 0;
 	data = (t_all *) arg;
 	active = data->active;
+	n_times = 0;
 	//printf("FILOSOFO ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
 	//printf("DATA->ALL_ALIVE = %i\t\tNUMBER_EXIT = %i\t\tNUMBER_OF_TIMES = %i\n", data->all_alive, data->philosophers[active].number_exit, data->philosophers[active].number_of_times);
 
@@ -197,22 +197,24 @@ void	*philosopher(void *arg)
 			while (ft_get_time() < stop_time && data->all_alive == 1)
 				usleep(1000);
 			//Ahora calculamos el tiempo de pensar
-			// time = ft_get_time();
-			// stop_time = (time - data->philosophers[active].last_eating) / 2;
-			// if (stop_time > 500)
-			// 	stop_time = 500;
-			// if (stop_time > 0)
-			// {
+			time = ft_get_time();
+			//printf("FILOSOFO %i TIME -> %li		LAST_EATING -> %li\n", active+1, time, data->philosophers[active].last_eating);
+			stop_time = (data->philosophers[active].time_to_die - (time - data->philosophers[active].last_eating)) / 2;
+			//printf("FILOSOFO %i STOP TIME THINKING -> %li\n", active+1, stop_time);
+			if (stop_time > 500)
+				stop_time = 500;
+			if (stop_time > 0)
+			{
 				if (data->all_alive == 1)
 				{
 					pthread_mutex_lock(&data->m_message);
 					ft_print_message(data, ft_get_time(), active, " is thinking");
 					pthread_mutex_unlock(&data->m_message);
 				}
-				// stop_time += time;
-				// while (ft_get_time() < stop_time && data->all_alive == 1)
-				// 	usleep(1000);
-			//}		
+				stop_time += time;
+				while (ft_get_time() < stop_time && data->all_alive == 1)
+					usleep(1000);
+			}		
 			//printf("FILOSOFO_ACTIVO -> %i\n", data->philosophers[active].index_philosopher);
 			//usleep(200000);
 		}
